@@ -1,49 +1,50 @@
-from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-import yt_dlp
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+
+from handlers.start import start
+from downloaders.manager import download
+
+from database.users import init_db
+
 import os
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "سلام 👋\nلینک اینستاگرام را ارسال کنید تا دانلود شود."
-    )
 
-async def download_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_link(update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text
-
-    if "instagram.com" not in url:
-        await update.message.reply_text("لطفا یک لینک معتبر اینستاگرام ارسال کنید.")
-        return
 
     await update.message.reply_text("⏳ در حال دانلود...")
 
     try:
-        ydl_opts = {
-            "outtmpl": "downloaded.%(ext)s",
-            "quiet": True,
-        }
+        file_path = await download(url)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-
-        with open(filename, "rb") as f:
-            await update.message.reply_video(f)
-
-        os.remove(filename)
+        with open(file_path, "rb") as f:
+            await update.message.reply_document(f)
 
     except Exception as e:
-        await update.message.reply_text(f"خطا: {e}")
+        await update.message.reply_text(f"❌ خطا:\n{e}")
+
 
 def main():
+    init_db()
+
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_instagram))
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handle_link)
+    )
+
+    print("Bot Started...")
 
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
