@@ -11,9 +11,12 @@ from telegram.ext import (
 )
 
 from handlers.start import start, check_join_callback
-from downloaders.manager import download
 from handlers.join import is_joined, join_markup
+from downloaders.manager import download
+
 from database.users import init_db, add_user
+
+from admin.stats import stats
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -31,14 +34,10 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user.first_name,
     )
 
-    joined = await is_joined(
-        context.bot,
-        user.id,
-    )
+    if not await is_joined(context.bot, user.id):
 
-    if not joined:
         await update.message.reply_text(
-            "🔒 ابتدا باید عضو کانال شوید.",
+            "🔒 ابتدا عضو کانال شوید.",
             reply_markup=join_markup(),
         )
         return
@@ -46,7 +45,6 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
 
     await update.message.reply_text(
-        "🔍 لینک دریافت شد...\n"
         "⏳ در حال دانلود..."
     )
 
@@ -79,7 +77,7 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
 
         await update.message.reply_text(
-            f"❌ دانلود ناموفق بود.\n\n{e}"
+            f"❌ {e}"
         )
 
 
@@ -97,6 +95,13 @@ def main():
         CommandHandler(
             "start",
             start,
+        )
+    )
+
+    app.add_handler(
+        CommandHandler(
+            "stats",
+            stats,
         )
     )
 
