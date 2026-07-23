@@ -17,6 +17,7 @@ from downloaders.manager import download
 from database.users import init_db, add_user
 
 from admin.stats import stats
+from admin.panel import panel
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -35,50 +36,31 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     if not await is_joined(context.bot, user.id):
-
         await update.message.reply_text(
-            "🔒 ابتدا عضو کانال شوید.",
+            "🔒 ابتدا باید عضو کانال شوید.",
             reply_markup=join_markup(),
         )
         return
 
     url = update.message.text.strip()
 
-    await update.message.reply_text(
-        "⏳ در حال دانلود..."
-    )
+    await update.message.reply_text("⏳ در حال دانلود...")
 
     try:
-
         file_path = await download(url)
 
-        if file_path.lower().endswith(
-            (
-                ".mp4",
-                ".mov",
-                ".mkv",
-                ".webm",
-            )
-        ):
-
+        if file_path.lower().endswith((".mp4", ".mov", ".mkv", ".webm")):
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video)
-
         else:
-
             with open(file_path, "rb") as file:
                 await update.message.reply_document(file)
 
-        try:
+        if os.path.exists(file_path):
             os.remove(file_path)
-        except:
-            pass
 
     except Exception as e:
-
-        await update.message.reply_text(
-            f"❌ {e}"
-        )
+        await update.message.reply_text(f"❌ {e}")
 
 
 def main():
@@ -91,19 +73,9 @@ def main():
         .build()
     )
 
-    app.add_handler(
-        CommandHandler(
-            "start",
-            start,
-        )
-    )
-
-    app.add_handler(
-        CommandHandler(
-            "stats",
-            stats,
-        )
-    )
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("panel", panel))
 
     app.add_handler(
         CallbackQueryHandler(
@@ -114,8 +86,7 @@ def main():
 
     app.add_handler(
         MessageHandler(
-            filters.TEXT
-            & ~filters.COMMAND,
+            filters.TEXT & ~filters.COMMAND,
             handle_link,
         )
     )
