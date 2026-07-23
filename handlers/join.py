@@ -1,35 +1,37 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatMemberStatus
 
-CHANNEL_USERNAME = "@HmHermi"
+CHANNEL = "@HmHermi"
 
 
-async def check_join(bot, user_id):
+async def is_joined(bot, user_id):
     try:
-        member = await bot.get_chat_member(CHANNEL_USERNAME, user_id)
+        member = await bot.get_chat_member(CHANNEL, user_id)
 
-        if member.status in ["member", "administrator", "creator"]:
-            return True
-
-    except:
-        pass
-
-    return False
-
-
-def join_keyboard():
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                "📢 عضویت در کانال",
-                url="https://t.me/HmHermi"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                "✅ عضو شدم",
-                callback_data="check_join"
-            )
+        return member.status in [
+            ChatMemberStatus.MEMBER,
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER,
         ]
-    ]
 
-    return InlineKeyboardMarkup(keyboard)
+    except Exception:
+        return False
+
+
+def join_markup():
+    return InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    "📢 عضویت در کانال",
+                    url="https://t.me/HmHermi",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "✅ عضو شدم",
+                    callback_data="joined",
+                )
+            ],
+        ]
+    )
