@@ -17,6 +17,7 @@ from downloaders.manager import download
 from database.users import init_db, add_user
 
 from admin.panel import panel, admin_callback
+from admin.broadcast import broadcast, handle_broadcast
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -24,6 +25,10 @@ TOKEN = os.getenv("BOT_TOKEN")
 async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not update.message:
+        return
+
+    # اگر ادمین در حالت پیام همگانی باشد
+    if await handle_broadcast(update, context):
         return
 
     user = update.effective_user
@@ -57,10 +62,8 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             with open(file_path, "rb") as file:
                 await update.message.reply_document(file)
 
-        try:
+        if os.path.exists(file_path):
             os.remove(file_path)
-        except:
-            pass
 
     except Exception as e:
         await update.message.reply_text(f"❌ {e}")
@@ -78,6 +81,7 @@ def main():
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("panel", panel))
+    app.add_handler(CommandHandler("broadcast", broadcast))
 
     app.add_handler(
         CallbackQueryHandler(
@@ -86,9 +90,7 @@ def main():
         )
     )
 
-    app.add_handler(
-        CallbackQueryHandler(admin_callback)
-    )
+    app.add_handler(CallbackQueryHandler(admin_callback))
 
     app.add_handler(
         MessageHandler(
