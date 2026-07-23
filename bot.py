@@ -16,8 +16,7 @@ from downloaders.manager import download
 
 from database.users import init_db, add_user
 
-from admin.stats import stats
-from admin.panel import panel
+from admin.panel import panel, admin_callback
 
 TOKEN = os.getenv("BOT_TOKEN")
 
@@ -37,7 +36,7 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if not await is_joined(context.bot, user.id):
         await update.message.reply_text(
-            "🔒 ابتدا باید عضو کانال شوید.",
+            "🔒 ابتدا عضو کانال شوید.",
             reply_markup=join_markup(),
         )
         return
@@ -49,15 +48,19 @@ async def handle_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         file_path = await download(url)
 
-        if file_path.lower().endswith((".mp4", ".mov", ".mkv", ".webm")):
+        if file_path.lower().endswith(
+            (".mp4", ".mov", ".mkv", ".webm")
+        ):
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video)
         else:
             with open(file_path, "rb") as file:
                 await update.message.reply_document(file)
 
-        if os.path.exists(file_path):
+        try:
             os.remove(file_path)
+        except:
+            pass
 
     except Exception as e:
         await update.message.reply_text(f"❌ {e}")
@@ -74,7 +77,6 @@ def main():
     )
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("stats", stats))
     app.add_handler(CommandHandler("panel", panel))
 
     app.add_handler(
@@ -82,6 +84,10 @@ def main():
             check_join_callback,
             pattern="^joined$",
         )
+    )
+
+    app.add_handler(
+        CallbackQueryHandler(admin_callback)
     )
 
     app.add_handler(
