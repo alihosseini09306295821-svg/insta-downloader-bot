@@ -6,7 +6,7 @@ from telegram import (
 from telegram.ext import ContextTypes
 
 from config import ADMIN_ID
-from database.users import get_users_count
+from database.users import total_users
 
 
 async def panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
