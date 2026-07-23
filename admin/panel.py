@@ -39,7 +39,7 @@ async def admin_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == "admin_stats":
 
-        count = get_users_count()
+        count = total_users()
 
         await query.message.reply_text(
             f"📊 آمار ربات\n\n👤 تعداد کاربران: {count}"
