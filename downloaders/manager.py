@@ -4,17 +4,17 @@ from .ytdlp import download_from_ytdlp
 
 async def download(url: str):
     methods = [
-        download_from_api,
-        download_from_gallery,
-        download_from_ytdlp,
+        download_from_api,      # اول API
+        download_from_gallery,  # بعد gallery-dl
+        download_from_ytdlp,    # آخرین گزینه
     ]
 
     last_error = None
-
     for method in methods:
         try:
             return await method(url)
         except Exception as e:
             last_error = e
+            continue
 
-    raise Exception(f"All download methods failed: {last_error}")
+    raise Exception(f"همه روش‌ها شکست خوردند: {last_error}")
