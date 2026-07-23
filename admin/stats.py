@@ -1,7 +1,9 @@
+import sqlite3
+
 from telegram import Update
 from telegram.ext import ContextTypes
+
 from config import ADMIN_ID
-import sqlite3
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -13,6 +15,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cur = conn.cursor()
 
     cur.execute("SELECT COUNT(*) FROM users")
+
     users = cur.fetchone()[0]
 
     conn.close()
@@ -20,6 +23,7 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"""📊 آمار ربات
 
-👤 تعداد کاربران: {users}
+👤 تعداد کاربران:
+{users}
 """
     )
