@@ -7,35 +7,18 @@ from telegram import (
 from telegram.ext import ContextTypes
 
 from database.users import add_user
-from handlers.join import check_join, join_keyboard
+from handlers.join import (
+    is_joined,
+    join_markup,
+)
 
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
-    user = update.effective_user
-
-    add_user(
-        user.id,
-        user.username,
-        user.first_name,
-    )
-
-    joined = await check_join(
-        context.bot,
-        user.id,
-    )
-
-    if not joined:
-        await update.message.reply_text(
-            "🔒 برای استفاده از ربات ابتدا باید عضو کانال شوید.",
-            reply_markup=join_keyboard(),
-        )
-        return
+def main_menu():
 
     keyboard = [
         [
             InlineKeyboardButton(
-                "📥 دانلود رسانه",
+                "📥 دانلود",
                 callback_data="download"
             )
         ],
@@ -51,10 +34,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
 
-    await update.message.reply_text(
-        """
+    return InlineKeyboardMarkup(keyboard)
+
+
+WELCOME = """
 ╔════════════════════╗
-🚀 Universal Media Downloader
+🚀 Universal Downloader
 ╚════════════════════╝
 
 سلام 👋
@@ -62,16 +47,3 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 به ربات دانلود حرفه‌ای خوش آمدید.
 
 📷 Instagram
-🎵 TikTok
-▶️ YouTube
-📘 Facebook
-🐦 X (Twitter)
-
-فقط لینک را ارسال کنید.
-
-━━━━━━━━━━━━━━━
-👑 Developer
-@HmHermi
-        """,
-        reply_markup=InlineKeyboardMarkup(keyboard),
-    )
