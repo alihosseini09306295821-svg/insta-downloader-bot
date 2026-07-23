@@ -1,48 +1,63 @@
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-import yt_dlp
 import os
+import tempfile
+from downloaders.manager import download
 
-TOKEN = os.getenv("BOT_TOKEN")
+try:
+    from config import BOT_TOKEN
+except ImportError:
+    BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "سلام 👋\nلینک اینستاگرام را ارسال کنید تا دانلود شود."
+        "سلام 👋\n"
+        "لینک اینستاگرام (ریل، پست، استوری، کاروسل) رو بفرست تا دانلود کنم."
     )
 
 async def download_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    url = update.message.text
-
+    url = update.message.text.strip()
+    
     if "instagram.com" not in url:
-        await update.message.reply_text("لطفا یک لینک معتبر اینستاگرام ارسال کنید.")
+        await update.message.reply_text("❌ لطفا یک لینک معتبر اینستاگرام ارسال کنید.")
         return
 
-    await update.message.reply_text("⏳ در حال دانلود...")
+    status_msg = await update.message.reply_text("⏳ در حال دانلود...")
 
     try:
-        ydl_opts = {
-            "outtmpl": "downloaded.%(ext)s",
-            "quiet": True,
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
-
+        filename = await download(url)
+        
         with open(filename, "rb") as f:
-            await update.message.reply_video(f)
-
-        os.remove(filename)
-
+            if filename.lower().endswith(('.mp4', '.mov', '.gif')):
+                await update.message.reply_video(
+                    f, 
+                    caption="✅ دانلود شد توسط بات",
+                    supports_streaming=True
+                )
+            else:
+                await update.message.reply_photo(f, caption="✅ دانلود شد")
+        
+        # پاکسازی
+        if os.path.exists(filename):
+            os.remove(filename)
+            
     except Exception as e:
-        await update.message.reply_text(f"خطا: {e}")
+        error_msg = str(e)
+        if "instagram" in error_msg.lower() or "private" in error_msg.lower():
+            await status_msg.edit_text("❌ این محتوا خصوصی است یا قابل دانلود نیست.")
+        else:
+            await status_msg.edit_text(f"❌ خطا: {error_msg[:150]}")
 
 def main():
-    app = Application.builder().token(TOKEN).build()
+    if not BOT_TOKEN:
+        raise ValueError("BOT_TOKEN environment variable is not set")
+    
+    app = Application.builder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_instagram))
+    app.add_handler(MessageHandler(filters.TEXT & \~filters.COMMAND, download_instagram))
 
+    print("🚀 ربات اینستاگرام با موفقیت شروع شد...")
     app.run_polling()
 
 if __name__ == "__main__":
