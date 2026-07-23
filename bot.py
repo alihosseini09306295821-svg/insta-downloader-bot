@@ -36,7 +36,6 @@ async def download_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE)
             else:
                 await update.message.reply_photo(f, caption="✅ دانلود شد")
         
-        # پاکسازی
         if os.path.exists(filename):
             os.remove(filename)
             
