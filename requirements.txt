@@ -1,4 +1,4 @@
-python-telegram-bot==20.8
+python-telegram-bot==20.7
 yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git
 gallery-dl
 requests
