@@ -1,5 +1,3 @@
-python-telegram-bot==20.7
+python-telegram-bot==21.10
 yt-dlp @ git+https://github.com/yt-dlp/yt-dlp.git
-gallery-dl
 requests
-sqlite-utils
