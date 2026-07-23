@@ -6,7 +6,7 @@ import os
 from datetime import datetime
 
 TOKEN = os.getenv("BOT_TOKEN")
-CHANNEL_ID = "@HmHermi"  # کانال عضویت اجباری
+CHANNEL_ID = "@HmHermi"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
@@ -17,8 +17,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def check_membership(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
     """Check if user is member of the required channel"""
-    user_id = update.effective_user.id
     try:
+        user_id = update.effective_user.id
         member = await context.bot.get_chat_member(CHANNEL_ID, user_id)
         return member.status in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]
     except Exception:
@@ -64,30 +64,25 @@ async def download_instagram(update: Update, context: ContextTypes.DEFAULT_TYPE)
         os.remove(filename)
 
     except Exception as e:
-        await update.message.reply_text(f"❌ خطا در دانلود: {e}")
+        await update.message.reply_text(f"❌ خطا در دانلود: {str(e)}")
 
 async def handle_chat_member(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """تشخیص عضویت جدید در کانال"""
-    if update.chat_member.new_chat_member.status in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
-        user = update.chat_member.new_chat_member.user
-        try:
-            await context.bot.send_message(
-                chat_id=user.id,
-                text="🎉 تبریک می‌گم! حالا عضو کانال @HmHermi هستی.\n"
-                     "لینک اینستاگرام مورد نظرت رو بفرست تا برات دانلود کنم ✨"
-            )
-        except Exception:
-            pass  # اگر پیام ارسال نشد مشکلی نیست
+    """تشخیص عضویت جدید در کانال (با مدیریت کامل خطا)"""
+    try:
+        if hasattr(update, 'chat_member') and update.chat_member and update.chat_member.new_chat_member:
+            new_status = update.chat_member.new_chat_member.status
+            if new_status in [ChatMemberStatus.MEMBER, ChatMemberStatus.ADMINISTRATOR, ChatMemberStatus.OWNER]:
+                user = update.chat_member.new_chat_member.user
+                await context.bot.send_message(
+                    chat_id=user.id,
+                    text="🎉 تبریک می‌گم! حالا عضو کانال @HmHermi هستی.\n"
+                         "لینک اینستاگرام مورد نظرت رو بفرست تا برات دانلود کنم ✨"
+                )
+    except Exception:
+        pass  # جلوگیری از هرگونه کرش
 
 def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & \~filters.COMMAND, download_instagram))
-    # Handler برای تشخیص عضویت
-    app.add_handler(ChatMemberHandler(handle_chat_member, chat_member_types=ChatMemberHandler.CHAT_MEMBER))
-
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    app
