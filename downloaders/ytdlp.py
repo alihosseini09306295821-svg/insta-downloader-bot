@@ -10,7 +10,7 @@ async def download_from_ytdlp(url: str):
         "quiet": True,
         "noplaylist": True,
         "merge_output_format": "mp4",
-        "format": "bestvideo+bestaudio/best",  # کیفیت بهتر
+        "format": "bestvideo+bestaudio/best",
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
