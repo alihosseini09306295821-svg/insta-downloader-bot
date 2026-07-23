@@ -41,3 +41,16 @@ def total_users():
 
     conn.close()
     return count
+
+
+def get_all_users():
+    conn = sqlite3.connect(DB_NAME)
+    cur = conn.cursor()
+
+    cur.execute("SELECT user_id FROM users")
+
+    users = [row[0] for row in cur.fetchall()]
+
+    conn.close()
+
+    return users
