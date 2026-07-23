@@ -1,20 +1,28 @@
-from .api import download_from_api
-from .gallery import download_from_gallery
-from .ytdlp import download_from_ytdlp
+from downloaders.api import download_from_api
+from downloaders.gallery import download_from_gallery
+from downloaders.ytdlp import download_from_ytdlp
+
 
 async def download(url: str):
-    methods = [
-        download_from_api,
-        download_from_gallery,
-        download_from_ytdlp,
-    ]
 
-    last_error = None
+    errors = []
 
-    for method in methods:
-        try:
-            return await method(url)
-        except Exception as e:
-            last_error = e
+    # روش اول: API
+    try:
+        return await download_from_api(url)
+    except Exception as e:
+        errors.append(f"API: {e}")
 
-    raise Exception(f"All download methods failed: {last_error}")
+    # روش دوم: gallery-dl
+    try:
+        return await download_from_gallery(url)
+    except Exception as e:
+        errors.append(f"Gallery: {e}")
+
+    # روش سوم: yt-dlp
+    try:
+        return await download_from_ytdlp(url)
+    except Exception as e:
+        errors.append(f"yt-dlp: {e}")
+
+    raise Exception("\n".join(errors))
